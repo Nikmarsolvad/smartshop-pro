@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentCategory = 'Tous';
 
-    // PHOTOS DE CATÉGORIES (Vérifiées et fonctionnelles)
     const categoryPhotos = {
         'Tous': 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=200',
         'Ordinateurs portables': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200',
@@ -34,7 +33,69 @@ document.addEventListener('DOMContentLoaded', () => {
         const cats = ['Tous', ...new Set(products.map(p => p.category))];
         navBar.innerHTML = cats.map(cat => `
             <button onclick="filterBy('${cat}')" class="flex flex-col items-center min-w-[100px] transition-all ${currentCategory === cat ? 'active-cat' : 'opacity-60 hover:opacity-100'}">
-                <img src="${categoryPhotos[cat] || categoryPhotos['Tous']}" 
+                <img src="${categoryPhotos[cat] || categoryPhotos['Tous']}" class="cat-photo shadow-lg" onerror="this.src='https://via.placeholder.com/200?text=Tech'">
+                <span class="cat-text" style="font-size: 9px; margin-top: 8px; font-weight: 800; color: white; text-align: center;">${cat}</span>
+            </button>
+        `).join('');
+    };
+
+    const render = () => {
+        if (!container) return;
+        const term = (searchInput?.value || "").toLowerCase();
+        const filtered = products.filter(p => p.name.toLowerCase().includes(term) && (currentCategory === 'Tous' || p.category === currentCategory));
+
+        container.innerHTML = filtered.map(p => {
+            let discount = "";
+            if (p.oldPrice && p.oldPrice > p.price) {
+                const perc = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+                discount = `<span class="promo-badge">-${perc}%</span>`;
+            }
+
+            const note = parseFloat(p.ratingText?.replace(',', '.') || "5");
+            const stars = Array(5).fill(0).map((_, i) => 
+                `<i class="fa-solid fa-star ${i < Math.floor(note) ? 'text-yellow-400' : 'text-slate-200'} text-[10px]"></i>`
+            ).join('');
+            
+            return `
+            <div class="bg-white p-5 rounded-[2.5rem] flex flex-col h-full relative group hover:shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-500 border border-slate-100">
+                ${discount}
+                <div class="mb-4 bg-slate-50 rounded-[2rem] h-48 flex items-center justify-center overflow-hidden">
+                    <img src="${p.image}" alt="${p.name}" class="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="flex flex-col flex-grow">
+                    <div class="flex gap-1 mb-2">${stars}</div>
+                    <h3 class="text-[13px] font-extrabold text-slate-900 mb-2 leading-tight overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 34px;">${p.name}</h3>
+                    <p class="text-[11px] text-slate-500 mb-4 leading-relaxed flex-grow overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; min-height: 48px;">${p.description || ''}</p>
+                    <div class="mt-auto pt-3 border-t border-slate-100">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xl font-black text-slate-900">${p.price.toFixed(2)}€</span>
+                            ${p.oldPrice ? `<span class="text-[10px] text-red-600 line-through font-bold">${p.oldPrice.toFixed(2)}€</span>` : ''}
+                        </div>
+                        <a href="${p.link}" target="_blank" class="block w-full bg-red-600 text-white text-center py-3 mt-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition-all">Acheter sur Amazon</a>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    };
+
+    const renderFooter = () => {
+        if (!footerContainer) return;
+        footerContainer.className = "bg-slate-950 text-slate-400 pt-20 pb-10 border-t border-white/5 mt-20";
+        footerContainer.innerHTML = `
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-10 text-left">
+                    <div><div class="text-xl font-black text-white mb-4 uppercase italic">Smart<span class="text-red-500">Shop</span></div><p class="text-[10px]">Sélection Premium Amazon.</p></div>
+                    <div><h4 class="text-white font-bold text-[10px] uppercase mb-4">Amazon</h4><p class="text-[9px] italic bg-white/5 p-3 rounded-lg">Partenaire Amazon.</p></div>
+                </div>
+                <div class="pt-8 border-t border-white/5 text-center"><p class="text-[9px] font-bold text-white/20">© 2026 SMARTSHOP SYSTEM</p></div>
+            </div>`;
+    };
+
+    updateMenu();
+    render();
+    renderFooter();
+    if (searchInput) searchInput.addEventListener('input', render);
+});                <img src="${categoryPhotos[cat] || categoryPhotos['Tous']}" 
                      class="cat-photo shadow-lg" 
                      onerror="this.src='https://via.placeholder.com/200?text=Tech'">
                 <span class="cat-text" style="font-size: 9px; margin-top: 8px; font-weight: 800; color: white; text-align: center;">${cat}</span>
