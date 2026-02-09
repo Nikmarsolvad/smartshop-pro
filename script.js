@@ -7,7 +7,6 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     styleMobile.innerHTML = `
         #liste-produits {
             display: grid !important;
-            /* Force 3 colonnes strictement égales */
             grid-template-columns: repeat(3, 1fr) !important; 
             gap: 12px !important;
             padding: 10px !important;
@@ -17,8 +16,12 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
         .product-card {
             border-radius: 20px !important;
             padding: 15px !important;
-            width: auto !important; /* Laisse la grille gérer la largeur */
+            width: auto !important;
             margin: 0 !important;
+        }
+        /* Agrandissement léger de la zone image sur mobile */
+        .img-container {
+            height: 130px !important; /* Passé de 110px à 130px */
         }
         .product-title {
             font-size: 11px !important;
@@ -30,6 +33,18 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     // PARAMÈTRES PC (96% zoom)
     document.body.style.zoom = "96%";
 }
+
+// AJOUT DU STYLE DE ZOOM GÉNÉRAL (PC ET MOBILE)
+const extraStyle = document.createElement('style');
+extraStyle.innerHTML = `
+    .img-container img {
+        transition: transform 0.3s ease-in-out !important;
+    }
+    .product-card:hover .img-container img {
+        transform: scale(1.1); /* Petit zoom de 10% au survol */
+    }
+`;
+document.head.appendChild(extraStyle);
 
 const navBar = document.getElementById('category-bar');
 const container = document.getElementById('liste-produits');
@@ -89,7 +104,7 @@ function appendProducts() {
         return `
         <div class="product-card" style="display: flex; flex-direction: column; justify-content: space-between; background: white !important; border-radius: 25px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <div>
-                <a href="${p.link}" target="_blank" class="img-container" style="height: 110px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                <a href="${p.link}" target="_blank" class="img-container" style="height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden;">
                     <img src="${p.image}" alt="${p.name}" loading="lazy" style="max-height: 100%; width: auto; object-fit: contain;">
                 </a>
                 <div class="flex items-center gap-1 mb-1">
