@@ -1,7 +1,7 @@
 // --- LOGIQUE DE ZOOM SPÉCIFIQUE ---
 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
     // Zoom pour téléphone (plus grand pour la lisibilité)
-    document.body.style.zoom = "80%"; 
+    document.body.style.zoom = "60%"; 
 } else {
     // Zoom pour PC (ton réglage actuel)
     document.body.style.zoom = "96%";
