@@ -1,5 +1,11 @@
-// Force le zoom de la page à 96%
-document.body.style.zoom = "96%";
+// --- LOGIQUE DE ZOOM SPÉCIFIQUE ---
+if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    // Zoom pour téléphone (plus grand pour la lisibilité)
+    document.body.style.zoom = "80%"; 
+} else {
+    // Zoom pour PC (ton réglage actuel)
+    document.body.style.zoom = "96%";
+}
 
 const navBar = document.getElementById('category-bar');
 const container = document.getElementById('liste-produits');
@@ -75,7 +81,6 @@ function appendProducts() {
     container.insertAdjacentHTML('beforeend', html);
     itemsLoaded += step;
     
-    // Petite pause pour laisser le navigateur souffler (important pour 10k produits)
     setTimeout(() => { isLoading = false; }, 50);
 }
 
@@ -98,16 +103,14 @@ window.renderProducts = (cat = 'Tous', search = '') => {
     appendProducts();
 };
 
-// Scroll infini optimisé pour les très longues listes
 window.addEventListener('scroll', () => {
-    // Si on arrive à 1500px du bas, on charge
     if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 1500) {
         appendProducts();
     }
 });
 
 window.filterBy = (n) => { 
-    isDataShuffled = false; // Reset du mélange si on change de catégorie
+    isDataShuffled = false;
     window.scrollTo(0,0); 
     renderProducts(n, document.getElementById('search').value); 
 };
