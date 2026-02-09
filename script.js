@@ -1,9 +1,23 @@
-// --- LOGIQUE DE ZOOM SPÉCIFIQUE ---
+// --- LOGIQUE DE ZOOM ET ADAPTATION MOBILE ---
 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    // Zoom pour téléphone (plus grand pour la lisibilité)
+    // Ton réglage spécial pour téléphone
     document.body.style.zoom = "60%"; 
+    
+    // Ajout CSS pour forcer les 2 colonnes sur mobile sans toucher au PC
+    const styleMobile = document.createElement('style');
+    styleMobile.innerHTML = `
+        #liste-produits {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+            padding: 10px !important;
+        }
+        .product-card {
+            border-radius: 20px !important;
+        }
+    `;
+    document.head.appendChild(styleMobile);
 } else {
-    // Zoom pour PC (ton réglage actuel)
+    // TES PARAMÈTRES PC ORIGINAUX (On ne touche à rien)
     document.body.style.zoom = "96%";
 }
 
@@ -14,9 +28,9 @@ let itemsLoaded = 0;
 const step = 40; 
 let currentProducts = [];
 let isLoading = false;
-let isDataShuffled = false; // Pour ne mélanger qu'une seule fois
+let isDataShuffled = false;
 
-// Fonction de mélange rapide (Fisher-Yates)
+// Fonction de mélange (Fisher-Yates)
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -25,15 +39,29 @@ function shuffleArray(array) {
     return array;
 }
 
+// Reconstruction du menu (Titre orange à gauche, sous-catégories à droite)
 function buildMenu() {
     if (typeof valisesData === 'undefined') { setTimeout(buildMenu, 100); return; }
     let html = "";
     Object.entries(valisesData).forEach(([name, subs]) => {
-        html += `<div class="valise-group"><span class="valise-title">${name}</span><div class="submenu">${subs.map(c => `<div onclick="filterBy('${c.nom}')" class="flex flex-col items-center"><div class="cat-photo-round"><img src="${c.img}"></div><span class="cat-label">${c.nom}</span></div>`).join('')}</div></div>`;
+        html += `
+        <div class="valise-group">
+            <span class="valise-title">${name}</span>
+            <div class="submenu">
+                ${subs.map(c => `
+                    <div onclick="filterBy('${c.nom}')" class="flex flex-col items-center">
+                        <div class="cat-photo-round">
+                            <img src="${c.img}">
+                        </div>
+                        <span class="cat-label">${c.nom}</span>
+                    </div>`).join('')}
+            </div>
+        </div>`;
     });
     navBar.insertAdjacentHTML('beforeend', html);
 }
 
+// Affichage des produits avec cartes blanches et bords arrondis
 function appendProducts() {
     if (isLoading || itemsLoaded >= currentProducts.length) return;
     isLoading = true;
@@ -48,12 +76,11 @@ function appendProducts() {
             ? `<span class="text-red-500 line-through text-[11px] font-black">${parseFloat(p.oldPrice).toFixed(2)}€</span>` 
             : "";
 
-        let descPure = (p.description || "")
-            .replace(/^(Le |La |Ce |Cet |Cette |C'est |Cest )/i, "");
+        let descPure = (p.description || "").replace(/^(Le |La |Ce |Cet |Cette |C'est |Cest )/i, "");
         descPure = descPure.charAt(0).toUpperCase() + descPure.slice(1);
 
         return `
-        <div class="product-card" style="display: flex; flex-direction: column; justify-content: space-between; background: white !important;">
+        <div class="product-card" style="display: flex; flex-direction: column; justify-content: space-between; background: white !important; border-radius: 25px; padding: 20px;">
             <div>
                 <a href="${p.link}" target="_blank" class="img-container">
                     <img src="${p.image}" alt="${p.name}" loading="lazy">
@@ -80,26 +107,21 @@ function appendProducts() {
 
     container.insertAdjacentHTML('beforeend', html);
     itemsLoaded += step;
-    
     setTimeout(() => { isLoading = false; }, 50);
 }
 
 window.renderProducts = (cat = 'Tous', search = '') => {
     if (typeof products === 'undefined') { setTimeout(() => renderProducts(cat, search), 100); return; }
-    
     container.innerHTML = ""; 
     itemsLoaded = 0;
-    
     let filtered = products.filter(p => (cat === 'Tous' || p.category === cat) && p.name.toLowerCase().includes(search.toLowerCase()));
 
-    // Mélange unique pour l'accueil
     if (cat === 'Tous' && search === '' && !isDataShuffled) {
         currentProducts = shuffleArray([...filtered]);
         isDataShuffled = true; 
     } else {
         currentProducts = filtered;
     }
-    
     appendProducts();
 };
 
