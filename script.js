@@ -1,8 +1,6 @@
 // --- CONFIGURATION ZOOM ET GRILLE ÉQUILIBRÉE ---
 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    // Zoom à 50% comme demandé
     document.body.style.zoom = "50%"; 
-    
     const styleMobile = document.createElement('style');
     styleMobile.innerHTML = `
         #liste-produits {
@@ -13,35 +11,73 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
             width: 100% !important;
             box-sizing: border-box !important;
         }
-        .product-card {
-            border-radius: 20px !important;
-            padding: 15px !important;
-            width: auto !important;
-            margin: 0 !important;
-        }
-        /* Agrandissement léger de la zone image sur mobile */
-        .img-container {
-            height: 130px !important; /* Passé de 110px à 130px */
-        }
-        .product-title {
-            font-size: 11px !important;
-            height: 30px !important;
-        }
+        .product-card { border-radius: 20px !important; padding: 15px !important; }
+        .img-container { height: 130px !important; }
     `;
     document.head.appendChild(styleMobile);
 } else {
-    // PARAMÈTRES PC (96% zoom)
     document.body.style.zoom = "96%";
+    const stylePC = document.createElement('style');
+    stylePC.innerHTML = `
+        #liste-produits {
+            display: grid !important;
+            grid-template-columns: repeat(5, 1fr) !important; 
+            gap: 25px !important;
+            padding: 30px !important;
+            width: 98% !important;
+            margin: 0 auto !important;
+        }
+        .product-card {
+            min-height: 500px !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .img-container {
+            height: 200px !important;
+            margin-bottom: 10px !important;
+            flex-shrink: 0 !important;
+        }
+        .product-card:hover {
+            transform: translateY(-8px) !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+        }
+        
+        .valise-title { 
+            font-size: 18px !important; 
+            color: #ffffff !important; 
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+        }
+        .cat-label { 
+            font-size: 13px !important; 
+            color: #ffffff !important; 
+            font-weight: 700 !important; 
+            margin-top: 5px !important;
+        }
+
+        #search {
+            width: 400px !important;
+            background-color: #232f3e !important;
+            color: #ffffff !important;
+            border: 1px solid #3a4553 !important;
+            padding: 12px 20px !important;
+            border-radius: 8px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            outline: none !important;
+        }
+    `;
+    document.head.appendChild(stylePC);
 }
 
-// AJOUT DU STYLE DE ZOOM GÉNÉRAL (PC ET MOBILE)
 const extraStyle = document.createElement('style');
 extraStyle.innerHTML = `
     .img-container img {
-        transition: transform 0.3s ease-in-out !important;
-    }
-    .product-card:hover .img-container img {
-        transform: scale(1.1); /* Petit zoom de 10% au survol */
+        transition: transform 0.4s ease !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
     }
 `;
 document.head.appendChild(extraStyle);
@@ -53,8 +89,8 @@ let itemsLoaded = 0;
 const step = 40; 
 let currentProducts = [];
 let isLoading = false;
-let isDataShuffled = false;
 
+// --- FONCTION DE MÉLANGE (SHUFFLE) ---
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -65,11 +101,14 @@ function shuffleArray(array) {
 
 function buildMenu() {
     if (typeof valisesData === 'undefined') { setTimeout(buildMenu, 100); return; }
-    let html = "";
+    let html = `
+    <div class="valise-group">
+        <span class="valise-title" onclick="renderProducts('Tous')" style="cursor:pointer">ACCUEIL</span>
+    </div>`;
     Object.entries(valisesData).forEach(([name, subs]) => {
         html += `
         <div class="valise-group">
-            <span class="valise-title" style="color: #febd69; font-weight: 900;">${name}</span>
+            <span class="valise-title">${name}</span>
             <div class="submenu">
                 ${subs.map(c => `
                     <div onclick="filterBy('${c.nom}')" class="flex flex-col items-center">
@@ -81,7 +120,7 @@ function buildMenu() {
             </div>
         </div>`;
     });
-    navBar.insertAdjacentHTML('beforeend', html);
+    navBar.innerHTML = html;
 }
 
 function appendProducts() {
@@ -90,40 +129,38 @@ function appendProducts() {
 
     const nextBatch = currentProducts.slice(itemsLoaded, itemsLoaded + step);
     const html = nextBatch.map(p => {
-        const ratingMatch = p.ratingText ? p.ratingText.match(/[\d,.]+/) : null;
+        const ratingMatch = p.ratingText ? p.ratingText.match(/[0-9,.]+/) : null;
         const ratingNum = ratingMatch ? parseFloat(ratingMatch[0].replace(',', '.')) : 0;
         const starPercentage = (ratingNum / 5) * 100;
 
         let oldPriceHtml = (p.oldPrice && parseFloat(p.oldPrice) > 0) 
-            ? `<span class="text-red-500 line-through text-[10px] font-black">${parseFloat(p.oldPrice).toFixed(2)}€</span>` 
-            : "";
-
-        let descPure = (p.description || "").replace(/^(Le |La |Ce |Cet |Cette |C'est |Cest )/i, "");
-        descPure = descPure.charAt(0).toUpperCase() + descPure.slice(1);
+            ? `<span class="text-red-500 line-through text-[12px] font-bold">${parseFloat(p.oldPrice).toFixed(2)}€</span>` 
+            : `<span style="visibility:hidden; font-size:12px;">0.00€</span>`;
 
         return `
-        <div class="product-card" style="display: flex; flex-direction: column; justify-content: space-between; background: white !important; border-radius: 25px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <div>
-                <a href="${p.link}" target="_blank" class="img-container" style="height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden;">
-                    <img src="${p.image}" alt="${p.name}" loading="lazy" style="max-height: 100%; width: auto; object-fit: contain;">
-                </a>
+        <div class="product-card" style="background: white !important; border-radius: 25px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+            <a href="${p.link}" target="_blank" class="img-container" style="display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <img src="${p.image}" alt="${p.name}" loading="lazy">
+            </a>
+            <div style="flex-grow: 1;"></div>
+            <div style="margin-top: 10px;">
                 <div class="flex items-center gap-1 mb-1">
-                    <div class="stars-outer" style="font-size: 10px;"><div class="stars-inner" style="width: ${starPercentage}%"></div></div>
+                    <div class="stars-outer" style="font-size: 12px;"><div class="stars-inner" style="width: ${starPercentage}%"></div></div>
                 </div>
-                <h3 class="product-title" style="font-weight: 900 !important; color: #000 !important; font-size: 13px !important; margin-bottom: 6px; line-height: 1.3; height: 34px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                <h3 class="product-title" style="font-weight: 900 !important; color: #0f172a !important; font-size: 16px !important; margin-bottom: 8px; line-height: 1.2; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                     ${p.name}
                 </h3>
-                <div style="margin: 5px 0 8px 0; height: 50px; overflow: hidden;">
-                    <p style="font-size: 11px; color: #334155; line-height: 1.3; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500;">
-                        ${descPure}
+                <div style="margin-bottom: 10px; height: 68px; overflow: hidden;">
+                    <p style="font-size: 14px; color: #000000; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
+                        ${p.description || ""}
                     </p>
                 </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 flex flex-col">
+            <div class="pt-3 border-t border-slate-100 flex flex-col">
                 ${oldPriceHtml}
-                <div class="flex justify-between items-center w-full">
-                    <div class="text-xl font-black text-red-600 leading-none">${p.price.toFixed(2)}€</div>
-                    <a href="${p.link}" target="_blank" class="bg-red-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">VOIR</a>
+                <div class="flex justify-between items-center w-full mt-1">
+                    <div class="text-2xl font-black text-red-600 leading-none">${p.price.toFixed(2)}€</div>
+                    <a href="${p.link}" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded-xl text-[11px] font-black uppercase">ACHETER</a>
                 </div>
             </div>
         </div>`;
@@ -136,16 +173,17 @@ function appendProducts() {
 
 window.renderProducts = (cat = 'Tous', search = '') => {
     if (typeof products === 'undefined') { setTimeout(() => renderProducts(cat, search), 100); return; }
-    container.innerHTML = ""; 
-    itemsLoaded = 0;
+    container.innerHTML = ""; itemsLoaded = 0;
+    
     let filtered = products.filter(p => (cat === 'Tous' || p.category === cat) && p.name.toLowerCase().includes(search.toLowerCase()));
-
-    if (cat === 'Tous' && search === '' && !isDataShuffled) {
+    
+    // Mélange si on est sur "Tous" (Accueil) sans recherche
+    if (cat === 'Tous' && search === '') {
         currentProducts = shuffleArray([...filtered]);
-        isDataShuffled = true; 
     } else {
         currentProducts = filtered;
     }
+    
     appendProducts();
 };
 
@@ -156,7 +194,6 @@ window.addEventListener('scroll', () => {
 });
 
 window.filterBy = (n) => { 
-    isDataShuffled = false;
     window.scrollTo(0,0); 
     renderProducts(n, document.getElementById('search').value); 
 };
