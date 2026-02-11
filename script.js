@@ -13,12 +13,22 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
             grid-auto-flow: row !important;
         }
         .product-card { 
-            border-radius: 20px !important; 
-            padding: 15px !important; 
+            background: white !important;
+            border-radius: 25px !important; 
+            padding: 20px !important; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
             min-width: 0 !important; 
             width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
-        .img-container { height: 130px !important; }
+        .img-container { 
+            height: 130px !important; 
+            display: flex !important; 
+            align-items: center !important; 
+            justify-content: center !important; 
+            overflow: hidden !important;
+        }
     `;
     document.head.appendChild(styleMobile);
 } else {
@@ -27,7 +37,6 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     stylePC.innerHTML = `
         #liste-produits {
             display: grid !important;
-            /* FIXE : 5 colonnes de taille strictement égale */
             grid-template-columns: repeat(5, 1fr) !important; 
             gap: 25px !important;
             padding: 30px !important;
@@ -36,7 +45,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
             box-sizing: border-box !important;
         }
         .product-card {
-            min-width: 0 !important; /* Empêche l'élargissement des colonnes */
+            min-width: 0 !important;
             width: 100% !important;
             min-height: 500px !important;
             transition: all 0.3s ease !important;
