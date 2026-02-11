@@ -5,7 +5,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     styleMobile.innerHTML = `
         #liste-produits {
             display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important; 
+            grid-template-columns: repeat(3, 1fr) !important; 
             gap: 12px !important;
             padding: 10px !important;
             width: 100% !important;
