@@ -5,13 +5,19 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     styleMobile.innerHTML = `
         #liste-produits {
             display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important; 
+            grid-template-columns: repeat(2, 1fr) !important; 
             gap: 12px !important;
             padding: 10px !important;
             width: 100% !important;
             box-sizing: border-box !important;
+            grid-auto-flow: row !important;
         }
-        .product-card { border-radius: 20px !important; padding: 15px !important; }
+        .product-card { 
+            border-radius: 20px !important; 
+            padding: 15px !important; 
+            min-width: 0 !important; 
+            width: 100% !important;
+        }
         .img-container { height: 130px !important; }
     `;
     document.head.appendChild(styleMobile);
@@ -21,22 +27,34 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     stylePC.innerHTML = `
         #liste-produits {
             display: grid !important;
+            /* FIXE : 5 colonnes de taille strictement égale */
             grid-template-columns: repeat(5, 1fr) !important; 
             gap: 25px !important;
             padding: 30px !important;
             width: 98% !important;
             margin: 0 auto !important;
+            box-sizing: border-box !important;
         }
         .product-card {
+            min-width: 0 !important; /* Empêche l'élargissement des colonnes */
+            width: 100% !important;
             min-height: 500px !important;
             transition: all 0.3s ease !important;
             display: flex !important;
             flex-direction: column !important;
+            background: white !important;
+            border-radius: 25px !important;
+            padding: 20px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
         }
         .img-container {
             height: 200px !important;
             margin-bottom: 10px !important;
             flex-shrink: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
         }
         .product-card:hover {
             transform: translateY(-8px) !important;
@@ -79,6 +97,7 @@ extraStyle.innerHTML = `
         max-height: 100% !important;
         object-fit: contain !important;
     }
+    .stars-outer { font-size: 12px; }
 `;
 document.head.appendChild(extraStyle);
 
@@ -90,7 +109,6 @@ const step = 40;
 let currentProducts = [];
 let isLoading = false;
 
-// --- FONCTION DE MÉLANGE (SHUFFLE) ---
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -138,29 +156,30 @@ function appendProducts() {
             : `<span style="visibility:hidden; font-size:12px;">0.00€</span>`;
 
         return `
-        <div class="product-card" style="background: white !important; border-radius: 25px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
-            <a href="${p.link}" target="_blank" class="img-container" style="display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <div class="product-card">
+            <a href="${p.link}" target="_blank" class="img-container">
                 <img src="${p.image}" alt="${p.name}" loading="lazy">
             </a>
-            <div style="flex-grow: 1;"></div>
-            <div style="margin-top: 10px;">
-                <div class="flex items-center gap-1 mb-1">
-                    <div class="stars-outer" style="font-size: 12px;"><div class="stars-inner" style="width: ${starPercentage}%"></div></div>
+            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="margin-top: 10px;">
+                    <div class="flex items-center gap-1 mb-1">
+                        <div class="stars-outer"><div class="stars-inner" style="width: ${starPercentage}%"></div></div>
+                    </div>
+                    <h3 class="product-title" style="font-weight: 900 !important; color: #0f172a !important; font-size: 16px !important; margin-bottom: 8px; line-height: 1.2; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                        ${p.name}
+                    </h3>
+                    <div style="margin-bottom: 10px; height: 68px; overflow: hidden;">
+                        <p style="font-size: 14px; color: #000000; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
+                            ${p.description || ""}
+                        </p>
+                    </div>
                 </div>
-                <h3 class="product-title" style="font-weight: 900 !important; color: #0f172a !important; font-size: 16px !important; margin-bottom: 8px; line-height: 1.2; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                    ${p.name}
-                </h3>
-                <div style="margin-bottom: 10px; height: 68px; overflow: hidden;">
-                    <p style="font-size: 14px; color: #000000; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
-                        ${p.description || ""}
-                    </p>
-                </div>
-            </div>
-            <div class="pt-3 border-t border-slate-100 flex flex-col">
-                ${oldPriceHtml}
-                <div class="flex justify-between items-center w-full mt-1">
-                    <div class="text-2xl font-black text-red-600 leading-none">${p.price.toFixed(2)}€</div>
-                    <a href="${p.link}" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded-xl text-[11px] font-black uppercase">ACHETER</a>
+                <div class="pt-3 border-t border-slate-100 flex flex-col">
+                    ${oldPriceHtml}
+                    <div class="flex justify-between items-center w-full mt-1">
+                        <div class="text-2xl font-black text-red-600 leading-none">${p.price.toFixed(2)}€</div>
+                        <a href="${p.link}" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded-xl text-[11px] font-black uppercase">ACHETER</a>
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -174,16 +193,12 @@ function appendProducts() {
 window.renderProducts = (cat = 'Tous', search = '') => {
     if (typeof products === 'undefined') { setTimeout(() => renderProducts(cat, search), 100); return; }
     container.innerHTML = ""; itemsLoaded = 0;
-    
     let filtered = products.filter(p => (cat === 'Tous' || p.category === cat) && p.name.toLowerCase().includes(search.toLowerCase()));
-    
-    // Mélange si on est sur "Tous" (Accueil) sans recherche
     if (cat === 'Tous' && search === '') {
         currentProducts = shuffleArray([...filtered]);
     } else {
         currentProducts = filtered;
     }
-    
     appendProducts();
 };
 
